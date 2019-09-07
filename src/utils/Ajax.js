@@ -1,4 +1,4 @@
-import { Host } from "@/models/Service";
+import { HOST as Host } from "@/models/service";
 function ajaxPost(path, body) {
   return new Promise((resolve, reject) => {
     fetch(Host + path, {
@@ -7,20 +7,22 @@ function ajaxPost(path, body) {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded"
       },
-      body: body
+      body: typeof body == "string" ? body : parser(body)
     })
       .then(response => {
         return response.json();
       })
       .then(data => {
-        if (data.error_code != 0) {
-          reject(data);
-        } else {
+        if (data.status == "success") {
           resolve(data);
+        } else {
+          let d = { status: `${data.data.errMsg}(${data.data.errCode})` };
+          reject(d);
         }
       })
-      .catch(() => {
-        reject({ error_code: -1, error_msg: "未知错误" });
+      .catch(data => {
+        console.error(data);
+        reject({ status: "未知错误" });
       });
   });
 }
@@ -33,18 +35,27 @@ function ajax(path) {
         return response.json();
       })
       .then(data => {
-        if (data.error_code == 0) {
-          resolve(data);
+        if (data.status == "success") {
+          resolve(data.data);
         } else {
-          reject(data);
+          let d = { status: `${data.data.errMsg}(${data.data.errCode})` };
+          reject(d);
         }
       })
-      .catch(() => {
-        reject({ error_code: -1, error_msg: "未知错误" });
+      .catch(data => {
+        console.error(data);
+        reject({ status: "未知错误" });
       });
   });
 }
-export default {
-  ajaxPost,
-  ajax
-};
+function parser(obj) {
+  let str = "";
+  let length = Object.keys(obj).length,
+    i = 0;
+  for (const key in obj) {
+    str += `${key}=${obj[key]}`;
+    ++i < length && (str += "&");
+  }
+  return str;
+}
+export { ajaxPost, ajax };

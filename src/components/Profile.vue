@@ -1,48 +1,56 @@
 <template>
   <div>
     <h3 class="section-title">个人信息</h3>
-    <el-button type="primary" :icon="canedit?'el-icon-edit':'el-icon-remove-outline'" @click="startEdit" v-if="!editmode" :disabled="!canedit">
-      <template v-if="canedit">编辑资料</template>
-      <template v-else>待审核</template>
+    <el-button
+      v-loading="editLoading"
+      type="primary"
+      :icon="canedit ? 'el-icon-edit' : 'el-icon-remove-outline'"
+      @click="startEdit"
+      v-if="!editmode"
+      :disabled="!canedit"
+    >
+      <template v-if="canedit">
+        编辑资料
+      </template>
+      <template v-else>
+        待审核
+      </template>
     </el-button>
     <template v-else>
-      <el-button type="success" icon="el-icon-check" @click="finishEdit">完成编辑</el-button>
-      <el-button type="danger" icon="el-icon-close" @click="cancelEdit" plain>取消编辑</el-button>
+      <el-button v-loading="editLoading" type="success" icon="el-icon-check" @click="finishEdit">完成编辑</el-button>
+      <el-button v-loading="editLoading" type="danger" icon="el-icon-close" @click="cancelEdit" plain>取消编辑</el-button>
     </template>
     <el-button type="primary" icon="el-icon-edit-outline" @click="editLogin">修改登录信息</el-button>
-    <table class="profile" cellspacing="0">
+    <table class="profile" cellspacing="0" v-loading="profile.loading">
       <tbody>
-        <template v-for="(value,key) of profile">
-          <tr v-if="key!='avatar'" :key="key">
+        <template v-for="(value, key) of profile">
+          <tr v-if="key != 'loading'" :key="key">
             <th>{{name[key]}}</th>
             <td @click="edit(key)">
-              <el-input @keydown.enter.native="editDone" v-if="clickEdit==key" v-model="editProfile[key]" :placeholder="name[value]"></el-input>
+              <el-input @keydown.enter.native="editDone" v-if="clickEdit == key" v-model="editProfile[key]" :placeholder="name[value]"></el-input>
               <template v-else>
-                <template v-if="key!='studentID' && editProfile.edit && editProfile[key]!=value">
+                <template v-if="key != 'studentId' && editProfile.edit && editProfile[key] != value">
                   <div class="profile-column">
-                    <template v-for="item in distance(editProfile[key],value)">
-                      <span :key="item.id+''" v-if="item.type=='add' || item.type=='different'" class="profile-add">{{item.word}}</span>
-                      <span :key="item.id+''" v-if="item.type=='delete'" class="profile-delete">{{item.word}}</span>
-                      <span :key="item.id+''" v-if="item.type=='equal'" class="profile-equal">{{item.word}}</span>
+                    <template v-for="item in distance(editProfile[key], value)">
+                      <span :key="item.id + ''" v-if="item.type == 'add' || item.type == 'different'" class="profile-add">{{ item.word }}</span>
+                      <span :key="item.id + ''" v-if="item.type == 'delete'" class="profile-delete">{{ item.word }}</span>
+                      <span :key="item.id + ''" v-if="item.type == 'equal'" class="profile-equal">{{ item.word }}</span>
                     </template>
                   </div>
                 </template>
-                <template v-else>{{value}}</template>
+                <template v-else>{{ value }}</template>
               </template>
-            </td>
-            <td v-if="key=='name'" class="avatar" rowspan="5">
-              <el-image :src="profile.avatar" fit="cover"></el-image>
             </td>
           </tr>
         </template>
       </tbody>
     </table>
     <h3 class="section-title">奖惩记录</h3>
-    <el-table stripe :data="reawrdData" border style="width: 100%" class="reward">
+    <el-table stripe :data="reawrdData" border style="width: 100%" class="reward" v-loading="rewardLoading">
       <el-table-column prop="date" label="日期" width="180"></el-table-column>
       <el-table-column prop="detail" label="详细信息"></el-table-column>
     </el-table>
-    <el-dialog title="修改登录信息" :visible.sync="dialogVisible" width="30%">
+    <el-dialog title="修改登录信息" :visible.sync="dialogVisible" width="30%" v-loading="dialogLoading">
       <el-form ref="form" :rules="rules" :hide-required-asterisk="true" :model="form" label-width="80px">
         <el-form-item label="密码" prop="password">
           <el-input placeholder="密码" v-model="form.password" show-password></el-input>
@@ -59,7 +67,9 @@
   </div>
 </template>
 <script>
-import editDistance from "@/utils/EditDistance";
+import EditDistance from "@/utils/editDistance";
+import Profile from "@/models/profile";
+import Account from "@/models/account";
 export default {
   name: "profile",
   data() {
@@ -74,68 +84,44 @@ export default {
     };
     return {
       profile: {
-        name: "马云",
-        studentID: 2018999900000,
-        faculty: "资本主义学院",
-        major: "川剧变脸学",
-        class: "20189999",
-        avatar: require("@/assets/img/avatar.png")
+        name: "",
+        studentId: "",
+        college: "",
+        major: "",
+        classInfo: "",
+        loading: false
       },
+      //profile对应key的name
       name: {
         name: "姓名",
-        studentID: "学号",
-        faculty: "学院",
+        studentId: "学号",
+        college: "学院",
         major: "专业",
-        class: "行政班级"
+        classInfo: "行政班级"
       },
       editProfile: {
         edit: false,
-        name: "马云",
-        faculty: "资本主义学院",
-        major: "川剧变脸学",
-        class: "20189999"
+        name: "",
+        college: "",
+        major: "",
+        classInfo: ""
       },
       clickEdit: "",
       editmode: false,
+      editLoading: false,
       canedit: true,
       dialogVisible: false,
+      dialogLoading: false,
       form: {
         password: "",
         password2: ""
       },
       rules: {
-        password: [
-          { required: true, message: "请输入新密码", trigger: "blur" }
-        ],
+        password: [{ required: true, message: "请输入新密码", trigger: "blur" }],
         password2: [{ validator: validatePass2, trigger: "blur" }]
       },
-      //写的我自己都笑出声了
-      reawrdData: [
-        {
-          date: "2014年1月1日",
-          detail: "我以后绝对不碰游戏"
-        },
-        {
-          date: "2016年1月1日",
-          detail: "阿里游戏正式成立"
-        },
-        {
-          date: "2017年7月1日",
-          detail: "我对钱没有兴趣"
-        },
-        {
-          date: "2017年8月1日",
-          detail: "我人生中最大的错误就是创办了阿里巴巴"
-        },
-        {
-          date: "2017年8月1日",
-          detail: "如果有来生，我一定选择家庭"
-        },
-        {
-          date: "2019年4月1日",
-          detail: "能够996是修来的福报"
-        }
-      ]
+      reawrdData: [],
+      rewardLoading: false
     };
   },
   methods: {
@@ -143,8 +129,8 @@ export default {
       if (!this.editmode || this.clickEdit != "") {
         return;
       }
-      if (key == "studentID") {
-        this.$message({ type: "error", message: "无法修改学号，请联系管理员" });
+      if (key == "studentId") {
+        this.$message({ type: "error", message: "无法修改学号，请联系教务处工作人员修改" });
         return;
       }
       this.clickEdit = key;
@@ -162,9 +148,20 @@ export default {
         this.$message({ type: "warning", message: "请先完成当前编辑" });
         return;
       }
-      this.$message({ type: "success", message: "提交成功，正在等待审核" });
-      this.editmode = false;
-      this.canedit = false;
+      let t = this.editProfile;
+      this.editLoading = true;
+      Profile.editProfile(t.name, this.profile.studentId, t.college, t.major, t.classInfo)
+        .then(() => {
+          this.$message({ type: "success", message: "提交成功，正在等待审核" });
+          this.editmode = false;
+          this.canedit = false;
+        })
+        .catch(data => {
+          this.$message({ type: "error", message: "提交失败，" + data.status });
+        })
+        .then(() => {
+          this.editLoading = false;
+        });
     },
     editLogin() {
       this.dialogVisible = true;
@@ -174,8 +171,18 @@ export default {
         if (!valid) {
           return false;
         }
-        this.$message({ type: "success", message: "修改成功" });
-        this.dialogVisible = false;
+        this.dialogLoading = true;
+        Account.editPassword(this.form.password)
+          .then(() => {
+            this.$message({ type: "success", message: "修改成功" });
+            this.dialogVisible = false;
+          })
+          .catch(data => {
+            this.$message({ type: "success", message: "修改失败：" + data.status });
+          })
+          .then(() => {
+            this.dialogLoading = false;
+          });
       });
     },
     cancelEdit() {
@@ -183,11 +190,61 @@ export default {
       this.editProfile.edit = false;
     },
     distance(str1, str2) {
-      return editDistance(str1, str2);
+      console.log(str1,str2);
+      return EditDistance(str1, str2);
+    },
+    getProfile() {
+      this.profile.loading = true;
+      Profile.getProfile()
+        .then(data => {
+          for (const key in data) {
+            if (this.profile.hasOwnProperty(key)) {
+              const element = data[key];
+              this.profile[key] = element;
+            }
+            if (key == "edit") {
+              if (data[key] == null) {
+                continue;
+              }
+              const element = data[key];
+              for (const k in element) {
+                if (this.editProfile.hasOwnProperty(k)) {
+                  this.editProfile[k] = element[k];
+                }
+              }
+              this.editProfile.edit = true;
+              this.canedit = false;
+            } else if (this.editProfile.hasOwnProperty(key)) {
+              const element = data[key];
+              this.editProfile[key] = element;
+            }
+          }
+        })
+        .catch(data => {
+          this.$message({ type: "error", message: `获取个人资料失败，${data.status}` });
+        })
+        .then(() => {
+          this.profile.loading = false;
+        });
+    },
+    getReward() {
+      this.rewardLoading = true;
+      Profile.getReward()
+        .then(data => {
+          this.reawrdData = data;
+        })
+        .catch(data => {
+          this.$message({ type: "error", message: `获取奖惩记录失败，${data.status}` });
+        })
+        .then(() => {
+          this.rewardLoading = false;
+        });
     }
   },
   mounted() {
     this.global.constant.title = "个人资料";
+    this.getProfile();
+    this.getReward();
   }
 };
 </script>
@@ -238,4 +295,5 @@ export default {
   margin: 10px 0 0 0;
 }
 </style>
+
 

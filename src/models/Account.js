@@ -1,15 +1,17 @@
-import Utils from "@/utils/Ajax";
+import { ajax, ajaxPost } from "@/utils/ajax";
 function checkIsLogin() {
-  return Utils.ajax("/account/check");
+  return ajax("/student/isLogin");
 }
 function login(un, pw) {
-  return Utils.ajaxPost("/account/login", `username=${un}&password=${pw}`);
+  return ajaxPost("/student/login", `name=${un}&password=${pw}`);
 }
-function logout(){
-  return Utils.ajax("/account/logout");
+function logout() {}
+function editPassword(password) {
+  return ajaxPost("/student/changePassword", { password: password });
 }
 export default {
   checkIsLogin,
   login,
-  logout
+  logout,
+  editPassword
 };

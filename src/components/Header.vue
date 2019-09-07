@@ -19,7 +19,7 @@
   </div>
 </template>
 <script>
-import Account from "@/models/Account";
+import Account from "@/models/account";
 export default {
   name: "header",
   data() {
@@ -31,16 +31,7 @@ export default {
   methods: {
     logout() {
       document.cookie = "";
-      Account.logout()
-        .then(() => {
-          this.$router.push("/login");
-        })
-        .catch(() => {
-          this.$message({
-            type: "error",
-            message: "退出登录失败，请重试"
-          });
-        });
+      this.$router.push("/login");
     }
   }
 };

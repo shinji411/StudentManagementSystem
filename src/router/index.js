@@ -1,6 +1,6 @@
 import Vue from "vue";
 import Router from "vue-router";
-import { Name } from "@/models/Service.js";
+import { NAME as Name } from "@/models/service.js";
 import Index from "@/views/Index";
 import Login from "@/views/Login";
 import Profile from "@/components/Profile";

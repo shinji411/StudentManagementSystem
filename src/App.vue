@@ -4,7 +4,7 @@
   </transition>
 </template>
 <script>
-import Account from "@/models/Account.js";
+import Account from "@/models/account";
 export default {
   name: "app",
   data() {
@@ -15,17 +15,12 @@ export default {
   mounted() {
     Account.checkIsLogin()
       .then(data => {
-        this.global.account.group = data.group;
-        this.global.account.username = data.username;
-        data.group == 2 &&
-          this.$route.fullPath.indexOf("/admin") == -1 &&
-          this.$router.push("/admin");
-        data.group != 2 &&
-          this.$route.fullPath.indexOf("/admin") != -1 &&
-          this.$router.push("/");
+        this.global.account.group = data.level == 0 ? 1 : 2;
+        this.global.account.username = data.name;
+        this.global.account.group == 2 && this.$route.fullPath.indexOf("/admin") == -1 && this.$router.push("/admin");
+        this.global.account.group != 2 && this.$route.fullPath.indexOf("/admin") != -1 && this.$router.push("/");
       })
       .catch(data => {
-        console.log(data);
         this.$route.fullPath != "/login" && this.$router.push("/login");
       })
       .then(() => {

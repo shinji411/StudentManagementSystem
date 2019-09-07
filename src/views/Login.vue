@@ -9,22 +9,12 @@
     <el-main class="login-main">
       <el-card class="box-card login-card" v-loading="loading">
         <h1>登录</h1>
-        <el-form
-          ref="form"
-          :rules="rules"
-          :hide-required-asterisk="true"
-          :model="form"
-          label-width="80px"
-        >
+        <el-form ref="form" :rules="rules" :hide-required-asterisk="true" :model="form" label-width="80px">
           <el-form-item label="用户名" prop="username">
             <el-input placeholder="用户名" v-model="form.username"></el-input>
           </el-form-item>
           <el-form-item label="密码" prop="password">
-            <el-input
-              placeholder="密码"
-              v-model="form.password"
-              show-password
-            ></el-input>
+            <el-input placeholder="密码" v-model="form.password" show-password></el-input>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="login">登录</el-button>
@@ -35,7 +25,7 @@
   </el-container>
 </template>
 <script>
-import Account from "@/models/Account.js";
+import Account from "@/models/account.js";
 export default {
   name: "Login",
   data() {
@@ -45,9 +35,7 @@ export default {
         password: ""
       },
       rules: {
-        username: [
-          { required: true, message: "请输入用户名", trigger: "blur" }
-        ],
+        username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
         password: [{ required: true, message: "请输入密码", trigger: "blur" }]
       },
       loading: false
@@ -62,20 +50,18 @@ export default {
         this.loading = true;
         Account.login(this.form.username, this.form.password)
           .then(data => {
-            this.global.account.group = data.group;
-            this.global.account.username = data.username;
+            this.global.account.group = data == 0 ? 1 : 2;
+            this.global.account.username = this.form.username;
             this.$message({
               type: "success",
               message: "登录成功，2秒后跳转到首页"
             });
             setTimeout(() => {
-              data.group == 2
-                ? this.$router.push("/admin")
-                : this.$router.push("/");
+              this.global.account.group == 2 ? this.$router.push("/admin") : this.$router.push("/");
             }, 2000);
           })
           .catch(data => {
-            this.$alert(`${data.error_msg}(${data.error_code})`, "登录失败", {
+            this.$alert(data.status, "登录失败", {
               confirmButtonText: "确定",
               type: "warning"
             });

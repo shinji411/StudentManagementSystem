@@ -3,7 +3,7 @@
     <el-button icon="el-icon-circle-plus-outline" @click="addCourseBtn" type="primary">添加课程</el-button>
     <el-button icon="el-icon-refresh-left" @click="refreshList">刷新列表</el-button>
     <el-input v-model="search" class="search" prefix-icon="el-icon-search" placeholder="搜索课程名称"></el-input>
-    <el-table border :data="courseData" stripe style="width: 100%;margin-top:10px;">
+    <el-table border :data="courseData" stripe style="width: 100%;margin-top:10px;" v-loading="loading">
       <el-table-column type="expand">
         <template slot-scope="props">
           <el-form label-position="left" inline class="course-table-expand">
@@ -17,9 +17,11 @@
               <span>{{ props.row.teacher.title }}</span>
             </el-form-item>
             <el-form-item label="上课周次">
-              <span><template v-for="item in props.row.weeks">
-                  <div class="course-week" :key="item">{{item}}</div>
-                </template></span>
+              <span
+                ><template v-for="item in props.row.weeks">
+                  <div class="course-week" :key="item">{{ item }}</div>
+                </template></span
+              >
             </el-form-item>
           </el-form>
         </template>
@@ -31,19 +33,24 @@
       <el-table-column prop="time" label="上课时间">
         <template slot-scope="scope">
           <template v-for="item in scope.row.time">
-            <div :key="item.week+'_'+item.lessons[0]">周{{weekChinese[item.week-1]}} {{item.lessons[0]}}<template v-if="item.lessons[1]!=item.lessons[0]">-{{item.lessons[1]}}</template>节</div>
+            <div :key="item.week + '_' + item.lessons[0]">
+              周{{ weekChinese[item.week - 1] }} {{ item.lessons[0] }}
+              <template v-if="item.lessons[1] != item.lessons[0]">
+                -{{ item.lessons[1] }}
+              </template>
+              节
+            </div>
           </template>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="160">
+      <el-table-column label="操作" width="80">
         <template slot-scope="scope">
-          <el-button @click="editBtn(scope.row)" size="mini">编辑</el-button>
+          <!-- <el-button @click="editBtn(scope.row)" size="mini">编辑</el-button> -->
           <el-button @click="deleteSubmit(scope.row)" type="danger" size="mini">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
-    <el-pagination class="pagination" background layout="prev, pager, next,jumper" :total="page.total" :current-page="page.now" :page-size="30" @current-change="changePage"></el-pagination>
-    <el-dialog top="3vh" width="400px" :title="dialog.title" :visible.sync="dialog.visible">
+    <el-dialog top="3vh" width="400px" :title="dialog.title" :visible.sync="dialog.visible" v-loading="dialogLoading">
       <el-form ref="form" :rules="rules" :hide-required-asterisk="true" :model="form" label-width="80px">
         <el-form-item class="student-edit-input" label="课程代码" prop="code">
           <el-input placeholder="课程代码" v-model="form.code"></el-input>
@@ -56,8 +63,7 @@
         </el-form-item>
         <el-form-item class="student-edit-input" label="分类" prop="classify">
           <el-select v-model="form.classify" placeholder="课程分类">
-            <el-option v-for="item in classify" :key="item" :label="item" :value="item">
-            </el-option>
+            <el-option v-for="item in classify" :key="item" :label="item" :value="item"> </el-option>
           </el-select>
         </el-form-item>
         <el-form-item class="student-edit-input" label="上课地点" prop="local">
@@ -68,37 +74,36 @@
         </el-form-item>
         <el-form-item class="student-edit-input" label="教师职称" prop="title">
           <el-select v-model="form.title" placeholder="教师职称">
-            <el-option v-for="item in title" :key="item" :label="item" :value="item">
-            </el-option>
+            <el-option v-for="item in title" :key="item" :label="item" :value="item"> </el-option>
           </el-select>
         </el-form-item>
         <el-form-item class="student-edit-input" label="上课周次" prop="week">
           <el-select v-model="form.week" multiple collapse-tags placeholder="请选择">
-            <el-option v-for="item in weeks" :key="item" :label="`第${item}周`" :value="item">
-            </el-option>
+            <el-option v-for="item in weeks" :key="item" :label="`第${item}周`" :value="item"> </el-option>
           </el-select>
         </el-form-item>
         <el-form-item class="student-edit-input" label="上课时间" prop="week">
-          <el-cascader v-model="form.time" :options="time" :props="{multiple: true}" collapse-tags></el-cascader>
+          <el-cascader v-model="form.time" :options="time" :props="{ multiple: true }" collapse-tags></el-cascader>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialog.visible = false">关闭</el-button>
-        <el-button v-if="dialog.mode=='add'" type="primary" @click="addSubmit">确定</el-button>
+        <el-button v-if="dialog.mode == 'add'" type="primary" @click="addSubmit">确定</el-button>
         <el-button v-else type="primary" @click="editSubmit">确定</el-button>
       </span>
     </el-dialog>
   </div>
 </template>
 <script>
-import Course from "@/models/Course";
-import CourseUtils from "@/utils/Course";
+import Course from "@/models/course";
+import CourseUtils from "@/utils/course";
 export default {
   name: "course-admin",
   data() {
     return {
-      // prettier-ignore
-      weeks:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+      loading: false,
+      dialogLoading: false,
+      weeks: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
       classify: [
         "思想政治理论课",
         "军事理论、体育",
@@ -115,51 +120,20 @@ export default {
         "跨专业选修课",
         "创新与拓展项目"
       ],
-      title: [
-        "教授",
-        "教授（特聘）",
-        "副教授",
-        "副教授（特聘）",
-        "讲师",
-        "讲师（特聘）"
-      ],
-      search:'',
+      title: ["教授", "教授（特聘）", "副教授", "副教授（特聘）", "讲师", "讲师（特聘）"],
+      search: "",
       time: Course.getTimeData(),
-      dialog: {
-        visible: false,
-        title: "添加课程",
-        mode: "add"
-      },
-      page: {
-        now: 1,
-        total: 1000
-      },
-      form: {
-        code: "",
-        name: "",
-        classify: "",
-        credit: 1,
-        local: "",
-        teacher: "",
-        title: "",
-        week: [],
-        time: []
-      },
+      dialog: { visible: false, title: "添加课程", mode: "add" },
+      form: { code: "", name: "", classify: "", credit: 1, local: "", teacher: "", title: "", week: [], time: [] },
       weekChinese: ["一", "二", "三", "四", "五", "六", "日"],
-      courseData: Course.getCourseData(),
+      courseData: [],
       rules: {
         code: [{ required: true, message: "请输入课程代码", trigger: "blur" }],
         name: [{ required: true, message: "请输入课程名称", trigger: "blur" }],
-        classify: [
-          { required: true, message: "请选择课程类别", trigger: "change" }
-        ],
+        classify: [{ required: true, message: "请选择课程类别", trigger: "change" }],
         local: [{ required: true, message: "请输入上课地点", trigger: "blur" }],
-        teacher: [
-          { required: true, message: "请输入教师名称", trigger: "blur" }
-        ],
-        title: [
-          { required: true, message: "请选择教师职称", trigger: "change" }
-        ],
+        teacher: [{ required: true, message: "请输入教师名称", trigger: "blur" }],
+        title: [{ required: true, message: "请选择教师职称", trigger: "change" }],
         week: [
           {
             required: true,
@@ -180,7 +154,19 @@ export default {
     };
   },
   methods: {
-    refreshList() {},
+    refreshList() {
+      this.loading = true;
+      Course.getCourse(true)
+        .then(data => {
+          this.courseData = data;
+        })
+        .catch(data => {
+          this.$message({ type: "error", message: "获取课程列表失败，" + data.status });
+        })
+        .then(() => {
+          this.loading = false;
+        });
+    },
     addCourseBtn() {
       this.form.code = "";
       this.form.name = "";
@@ -211,12 +197,39 @@ export default {
       this.dialog.visible = true;
       this.dialog.mode = "edit";
     },
-    deleteSubmit(item) {},
-    addSubmit() {},
+    deleteSubmit(item) {
+      this.loading = true;
+      Course.deleteCourse(item.id)
+        .then(data => {
+          this.courseData = data;
+          this.refreshList();
+        })
+        .catch(data => {
+          this.$message({ type: "error", message: "操作失败，" + data.status });
+          this.loading = false;
+        });
+    },
+    addSubmit() {
+      this.$refs.form.validate(valid => {
+        if (!valid) {
+          return false;
+        }
+        this.loading = true;
+        let t = this.form;
+        Course.addCourse(t.name, t.code, t.classify, t.credit, t.local, t.teacher, t.title, t.week, t.time)
+          .then(data => {
+            this.courseData = data;
+            this.refreshList();
+          })
+          .catch(data => {
+            this.$message({ type: "error", message: "操作失败，" + data.status });
+            this.loading = false;
+          });
+      });
+    },
     editSubmit() {
       console.log(this.form.time);
-    },
-    changePage() {}
+    }
   },
   mounted() {
     this.global.constant.title = "课程管理";
