@@ -119,7 +119,7 @@
     <!--dialog end-->
 
     <!--add dialog start-->
-    <el-dialog top="7vh" width="400px" title="添加新学生" :visible.sync="addDialogVisible" v-loading="tableLoading">
+    <el-dialog top="7vh" width="400px" title="添加新学生" :visible.sync="addDialogVisible" v-loading="loading">
       <el-form ref="addForm" :rules="rules" :hide-required-asterisk="true" :model="addForm" label-width="45px">
         <el-form-item class="student-edit-input" label="学号" prop="studentId">
           <el-input placeholder="学号" v-model="addForm.studentId"></el-input>
@@ -138,9 +138,6 @@
         </el-form-item>
         <el-form-item class="student-edit-input" label="密码" prop="password">
           <el-input placeholder="密码" v-model="addForm.password" show-password></el-input>
-        </el-form-item>
-        <el-form-item class="student-edit-input" label="确认" prop="password2">
-          <el-input placeholder="确认密码" v-model="addForm.password2" show-password></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">

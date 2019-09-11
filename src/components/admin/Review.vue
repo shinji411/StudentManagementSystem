@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-button icon="el-icon-refresh-left" @click="refreshList">刷新列表</el-button>
-    <el-input v-model="search.studentId" class="search" prefix-icon="el-icon-search" placeholder="搜索学号"></el-input>
+    <!-- <el-input v-model="search.studentId" class="search" prefix-icon="el-icon-search" placeholder="搜索学号"></el-input> -->
     <el-table border :data="studentData" stripe style="width: 100%;margin-top:10px;" v-loading="loading">
       <el-table-column prop="studentId" label="学号"></el-table-column>
       <el-table-column prop="name" label="姓名" class="profile-column"></el-table-column>
@@ -71,6 +71,7 @@ export default {
   },
   mounted() {
     this.global.constant.title = "信息审核";
+    this.refreshList();
   }
 };
 </script>

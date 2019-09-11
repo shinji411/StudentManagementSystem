@@ -50,7 +50,7 @@ export default {
         this.loading = true;
         Account.login(this.form.username, this.form.password)
           .then(data => {
-            this.global.account.group = data == 0 ? 1 : 2;
+            this.global.account.group = data.data== 0 ? 1 : 2;
             this.global.account.username = this.form.username;
             this.$message({
               type: "success",

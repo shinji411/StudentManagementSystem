@@ -2,7 +2,7 @@
   <div>
     <el-button icon="el-icon-circle-plus-outline" @click="addCourseBtn" type="primary">添加课程</el-button>
     <el-button icon="el-icon-refresh-left" @click="refreshList">刷新列表</el-button>
-    <el-input v-model="search" class="search" prefix-icon="el-icon-search" placeholder="搜索课程名称"></el-input>
+    <!-- <el-input v-model="search" class="search" prefix-icon="el-icon-search" placeholder="搜索课程名称"></el-input> -->
     <el-table border :data="courseData" stripe style="width: 100%;margin-top:10px;" v-loading="loading">
       <el-table-column type="expand">
         <template slot-scope="props">
@@ -233,6 +233,7 @@ export default {
   },
   mounted() {
     this.global.constant.title = "课程管理";
+    this.refreshList(); 
   }
 };
 </script>
